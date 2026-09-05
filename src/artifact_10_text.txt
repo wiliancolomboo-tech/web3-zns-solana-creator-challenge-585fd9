@@ -1,0 +1,8 @@
+zns-creator protocol tests
+    ✔ 1. Initializes Global Registry with valid protocol fee (412ms)
+    ✔ 2. Registers root creator handle with dynamic fee assessment (523ms)
+    ✔ 3. Issues monetized fan subdomain with automated revenue split (611ms)
+    ✔ 4. Dispatches zero-hop atomic tip to creator (489ms)
+    ✔ 5. Fails when unauthorized user attempts to update creator profile (245ms)
+
+  5 passing (2.3s)

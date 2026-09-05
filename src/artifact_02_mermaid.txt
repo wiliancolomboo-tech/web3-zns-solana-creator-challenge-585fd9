@@ -1,0 +1,58 @@
+flowchart TD
+    %% Global Nodes & Styling
+    classDef client fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
+    classDef program fill:#181825,stroke:#f38ba8,stroke-width:2px,color:#cdd6f4;
+    classDef pda fill:#313244,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4;
+    classDef cpi fill:#45475a,stroke:#fab387,stroke-width:2px,color:#cdd6f4;
+
+    subgraph UserSpace["Client & Consumer Layer"]
+        Fan["Fan / Supporter Wallet"]:::client
+        Creator["Creator Admin Wallet"]:::client
+        Gov["Protocol Admin Wallet"]:::client
+    end
+
+    subgraph ProgramBoundary["ZNS Protocol (Anchor Program Engine)"]
+        InitReg["initialize_registry()"]:::program
+        RegHandle["register_creator_handle()"]:::program
+        IssueSub["issue_fan_subdomain()"]:::program
+        RouteTip["send_creator_tip()"]:::program
+        UpdateMeta["update_creator_metadata()"]:::program
+    end
+
+    subgraph StateAccounts["On-Chain Program-Derived Accounts (PDAs)"]
+        GlobalConfig["GlobalRegistry PDA\n['global_registry']\n- admin: Pubkey\n- total_handles: u64\n- treasury: Pubkey"]:::pda
+        CreatorRecord["CreatorProfile PDA\n['creator', handle_hash]\n- authority: Pubkey\n- handle: [u8; 32]\n- subdomain_fee: u64\n- royalty_bps: u16\n- total_subdomains: u32"]:::pda
+        SubRecord["SubdomainRecord PDA\n['subdomain', creator_key, sub_hash]\n- owner: Pubkey\n- expiry_epoch: i64\n- tier: u8 (Soulbound)"]:::pda
+        CreatorVault["Creator Vault PDA / Native\nDirect SOL Recipient"]:::pda
+        TreasuryAccount["Protocol Treasury Vault"]:::pda
+    end
+
+    subgraph ExternalCPI["Solana Runtime CPIs"]
+        SysProg["System Program (SOL Transfer CPI)"]:::cpi
+    end
+
+    %% Flow associations
+    Gov -->|1. Setup Protocol| InitReg
+    InitReg -->|Writes State| GlobalConfig
+
+    Creator -->|2. Claim Handle| RegHandle
+    GlobalConfig -.->|Verify Pricing Curve| RegHandle
+    RegHandle -->|Allocates PDA| CreatorRecord
+    RegHandle -->|CPI Transfer Base Fee| SysProg
+    SysProg -->|Deposit Fee| TreasuryAccount
+
+    Fan -->|3. Mint Subdomain / Tier| IssueSub
+    CreatorRecord -.->|Check Subdomain Fee & Splits| IssueSub
+    IssueSub -->|Allocates PDA| SubRecord
+    IssueSub -->|CPI Split: Creator Fee| SysProg
+    IssueSub -->|CPI Split: Protocol BPS| SysProg
+    SysProg -->|Payout (100% - Royalty BPS)| CreatorVault
+    SysProg -->|Payout (Royalty BPS)| TreasuryAccount
+
+    Fan -->|4. Direct Creator Tip| RouteTip
+    CreatorRecord -.->|Read Authority| RouteTip
+    RouteTip -->|Direct Native Transfer| SysProg
+    SysProg -->|100% Tip Amount| CreatorVault
+
+    Creator -->|5. Update Configuration| UpdateMeta
+    UpdateMeta -->|Signer Match Verification| CreatorRecord

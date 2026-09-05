@@ -1,0 +1,1 @@
+solana address -k target/deploy/zns_creator-keypair.json
