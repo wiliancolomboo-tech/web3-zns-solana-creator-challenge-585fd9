@@ -1,27 +1,17 @@
-+--------------------------------------------------------------------------------------------------+
-|                                    ZNS PROTOCOL ARCHITECTURE                                     |
-|                                                                                                  |
-|   [Fan / Collector]             [Creator Authority]                [Protocol Governance]         |
-|           |                              |                                   |                   |
-|           | (Tip / Mint Subdomain)       | (Configure Fees / Metadata)       | (Protocol Config) |
-|           v                              v                                   v                   |
-|  +--------------------------------------------------------------------------------------------+  |
-|  |                             Anchor Program Entrypoint (ZNS Core)                           |  |
-|  +--------------------------------------------------------------------------------------------+  |
-|           |                                      |                                   |           |
-|           v                                      v                                   v           |
-|  +------------------+                 +--------------------+              +-------------------+  |
-|  | CreatorProfile   |                 |  SubdomainRecord   |              |  GlobalRegistry   |  |
-|  | PDA: ["creator", |                 |  PDA: ["subdomain",|              |  PDA: ["global"]  |  |
-|  |       handle]    |                 |   root, sub_hash]  |              |                   |  |
-|  +------------------+                 +--------------------+              +-------------------+  |
-|           |                                      |                                               |
-|           +-------------------+------------------+                                               |
-|                               |                                                                  |
-|                               v                                                                  |
-|               +-------------------------------+                                                  |
-|               |  Solana System Program CPI    |                                                  |
-|               |  - Native SOL Payout (Vault)  |                                                  |
-|               |  - Protocol Fee Escrow        |                                                  |
-|               +-------------------------------+                                                  |
-+--------------------------------------------------------------------------------------------------+
++-------------------------------------------------------------------+
+       |                       Zenith Name Service                         |
+       +-------------------------------------------------------------------+
+                                         |
+     +-------------------+---------------+-------------------+
+     |                   |                                   |
++----------+      +---------------+                 +-----------------+
+| Identity |      | Monetization  |                 | Sub-Namespace   |
+| Engine   |      | Layer         |                 | Delegation      |
++----------+      +---------------+                 +-----------------+
+     |                   |                                   |
+     * Canonical         * Real-time Fan Tipping             * Permissionless /
+       Resolution          Splits                              Whitelisted Fans
+     * Reverse Ptr       * Protocol Treasury                 * Custom Expiry
+       PDA                 Accrual                             & Revocation
+     * Dynamic           * Zero-CPI Native Lamport
+       Metadata            Routing

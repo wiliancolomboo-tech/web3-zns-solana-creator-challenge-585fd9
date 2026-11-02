@@ -1,0 +1,19 @@
+zns-creator-solana/
+├── Anchor.toml
+├── Cargo.toml
+├── programs/
+│   └── zns-creator-core/
+│       ├── Cargo.toml
+│       └── src/
+│           ├── errors.rs
+│           ├── instructions/
+│           │   ├── initialize.rs
+│           │   ├── register_domain.rs
+│           │   ├── set_metadata.rs
+│           │   ├── issue_subdomain.rs
+│           │   ├── reverse_lookup.rs
+│           │   └── reclaim_subdomain.rs
+│           ├── state.rs
+│           └── lib.rs
+└── tests/
+    └── zns-creator.ts

@@ -1,181 +1,226 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { ZnsCreator } from "../target/types/zns_creator";
-import { PublicKey, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { ZnsSolana } from "../target/types/zns_solana";
+import { PublicKey, Keypair, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { expect } from "chai";
 import { createHash } from "crypto";
 
-describe("zns-creator protocol tests", () => {
+describe("🟢 ZNS Solana Creator Registry & Monitization E2E Suite", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.ZnsCreator as Program<ZnsCreator>;
+  const program = anchor.workspace.ZnsSolana as Program<ZnsSolana>;
 
-  const admin = anchor.web3.Keypair.generate();
-  const treasury = anchor.web3.Keypair.generate();
-  const creator = anchor.web3.Keypair.generate();
-  const fanUser = anchor.web3.Keypair.generate();
-  const intruder = anchor.web3.Keypair.generate();
+  const admin = Keypair.generate();
+  const treasury = Keypair.generate();
+  const creatorAlice = Keypair.generate();
+  const collaboratorBob = Keypair.generate();
+  const fanCharlie = Keypair.generate();
 
-  const sha256 = (str: string): Buffer => {
-    return createHash("sha256").update(str).digest();
-  };
+  const domainName = "alice_creator";
+  const nameHash = createHash("sha256").update(domainName).digest();
 
-  const [globalRegistryPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("global_registry")],
-    program.programId
-  );
-
-  const handle = "zenith";
-  const handleHash = sha256(handle);
-  const [creatorProfilePda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("creator"), handleHash],
-    program.programId
-  );
-
-  const subdomain = "alphafan";
-  const subdomainHash = sha256(subdomain);
-  const [subdomainRecordPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("subdomain"), creatorProfilePda.toBuffer(), subdomainHash],
-    program.programId
-  );
+  let configPda: PublicKey;
+  let domainPda: PublicKey;
+  let reversePda: PublicKey;
 
   before(async () => {
-    // Fund test wallets
-    const airdropSigners = [admin, creator, fanUser, intruder];
-    for (const kp of airdropSigners) {
-      const sig = await provider.connection.requestAirdrop(
-        kp.publicKey,
-        5 * LAMPORTS_PER_SOL
-      );
-      await provider.connection.confirmTransaction(sig);
+    // Fund test actors
+    for (const actor of [admin, creatorAlice, collaboratorBob, fanCharlie]) {
+      const sig = await provider.connection.requestAirdrop(actor.publicKey, 10 * LAMPORTS_PER_SOL);
+      const latestBlockhash = await provider.connection.getLatestBlockhash();
+      await provider.connection.confirmTransaction({
+        signature: sig,
+        ...latestBlockhash,
+      });
     }
+
+    [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], program.programId);
+
+    [domainPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("zns_domain"), nameHash],
+      program.programId
+    );
+
+    [reversePda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("zns_reverse"), creatorAlice.publicKey.toBuffer()],
+      program.programId
+    );
   });
 
-  it("1. Initializes Global Registry with valid protocol fee", async () => {
-    const feeBps = 500; // 5% fee
+  it("1. Initializes the ZNS Global Configuration", async () => {
+    const feeBps = 200; // 2%
+    const baseFee = new anchor.BN(0.05 * LAMPORTS_PER_SOL);
+
     await program.methods
-      .initializeRegistry(feeBps)
+      .initialize(feeBps, baseFee)
       .accounts({
-        globalRegistry: globalRegistryPda,
-        admin: admin.publicKey,
+        config: configPda,
         treasury: treasury.publicKey,
+        authority: admin.publicKey,
         systemProgram: SystemProgram.programId,
       })
       .signers([admin])
       .rpc();
 
-    const registry = await program.account.globalRegistry.fetch(globalRegistryPda);
-    expect(registry.admin.toBase58()).to.equal(admin.publicKey.toBase58());
-    expect(registry.treasury.toBase58()).to.equal(treasury.publicKey.toBase58());
-    expect(registry.protocolFeeBps).to.equal(500);
-    expect(registry.totalCreators.toNumber()).to.equal(0);
+    const configAccount = await program.account.config.fetch(configPda);
+    expect(configAccount.authority.toBase58()).to.equal(admin.publicKey.toBase58());
+    expect(configAccount.treasury.toBase58()).to.equal(treasury.publicKey.toBase58());
+    expect(configAccount.feeBasisPoints).to.equal(feeBps);
+    expect(configAccount.totalRegistered.toNumber()).to.equal(0);
   });
 
-  it("2. Registers root creator handle with dynamic fee assessment", async () => {
+  it("2. Registers a domain with valid syntax and collaborator split", async () => {
+    const duration = new anchor.BN(86400 * 365); // 1 year
+    const splitBps = 2000; // 20% to Bob
+    const contentHash = "ipfs://QmZtmD2qt8fJpq3rBsEQZRiZHSn45nHYaswqunB685kcw5";
+
     const initialTreasuryBalance = await provider.connection.getBalance(treasury.publicKey);
-    const subdomainFee = new anchor.BN(0.05 * LAMPORTS_PER_SOL);
-    const royaltyBps = 1000; // 10%
-    const uri = "https://zns.link/creator/zenith.json";
 
     await program.methods
-      .registerCreatorHandle(handle, uri, subdomainFee, royaltyBps)
+      .registerDomain(
+        domainName,
+        duration,
+        contentHash,
+        collaboratorBob.publicKey,
+        splitBps
+      )
       .accounts({
-        globalRegistry: globalRegistryPda,
-        creatorProfile: creatorProfilePda,
-        creator: creator.publicKey,
+        config: configPda,
+        domainRecord: domainPda,
+        payer: creatorAlice.publicKey,
+        owner: creatorAlice.publicKey,
         treasury: treasury.publicKey,
         systemProgram: SystemProgram.programId,
       })
-      .signers([creator])
+      .signers([creatorAlice])
       .rpc();
 
-    const profile = await program.account.creatorProfile.fetch(creatorProfilePda);
-    expect(profile.authority.toBase58()).to.equal(creator.publicKey.toBase58());
-    expect(profile.subdomainBaseFee.toString()).to.equal(subdomainFee.toString());
-    expect(profile.totalSubdomains).to.equal(0);
+    const domainAcc = await program.account.domainRecord.fetch(domainPda);
+    expect(domainAcc.owner.toBase58()).to.equal(creatorAlice.publicKey.toBase58());
+    expect(domainAcc.collaborator.toBase58()).to.equal(collaboratorBob.publicKey.toBase58());
+    expect(domainAcc.collaboratorSplitBps).to.equal(2000);
+    expect(domainAcc.name).to.equal(domainName);
+    expect(domainAcc.contentHash).to.equal(contentHash);
 
     const postTreasuryBalance = await provider.connection.getBalance(treasury.publicKey);
-    // "zenith" is 6 letters -> 100_000_000 lamports (0.1 SOL)
-    expect(postTreasuryBalance - initialTreasuryBalance).to.equal(100_000_000);
+    expect(postTreasuryBalance).to.be.greaterThan(initialTreasuryBalance);
   });
 
-  it("3. Issues monetized fan subdomain with automated revenue split", async () => {
-    const creatorBalBefore = await provider.connection.getBalance(creator.publicKey);
-    const treasuryBalBefore = await provider.connection.getBalance(treasury.publicKey);
+  it("3. Rejects illegal domain names (capitalization, special chars)", async () => {
+    const invalidName = "Alice.Sol!";
+    const invalidHash = createHash("sha256").update(invalidName).digest();
+    const [invalidPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("zns_domain"), invalidHash],
+      program.programId
+    );
 
-    const tier = 2; // Silver tier
-    const duration = new anchor.BN(100); // 100 epochs
-
-    await program.methods
-      .issueFanSubdomain(subdomain, tier, duration)
-      .accounts({
-        globalRegistry: globalRegistryPda,
-        creatorProfile: creatorProfilePda,
-        subdomainRecord: subdomainRecordPda,
-        fan: fanUser.publicKey,
-        creatorAuthority: creator.publicKey,
-        treasury: treasury.publicKey,
-        systemProgram: SystemProgram.programId,
-      })
-      .signers([fanUser])
-      .rpc();
-
-    const subRecord = await program.account.subdomainRecord.fetch(subdomainRecordPda);
-    expect(subRecord.owner.toBase58()).to.equal(fanUser.publicKey.toBase58());
-    expect(subRecord.tier).to.equal(tier);
-
-    // Subdomain fee is 0.05 SOL = 50,000,000 lamports
-    // Protocol fee = 5% (2,500,000)
-    // Creator net cut = 95% (47,500,000)
-    const creatorBalAfter = await provider.connection.getBalance(creator.publicKey);
-    const treasuryBalAfter = await provider.connection.getBalance(treasury.publicKey);
-
-    expect(creatorBalAfter - creatorBalBefore).to.equal(47_500_000);
-    expect(treasuryBalAfter - treasuryBalBefore).to.equal(2_500_000);
-  });
-
-  it("4. Dispatches zero-hop atomic tip to creator", async () => {
-    const tipAmount = new anchor.BN(1 * LAMPORTS_PER_SOL);
-    const creatorBalBefore = await provider.connection.getBalance(creator.publicKey);
-    const treasuryBalBefore = await provider.connection.getBalance(treasury.publicKey);
-
-    await program.methods
-      .sendCreatorTip(tipAmount)
-      .accounts({
-        globalRegistry: globalRegistryPda,
-        creatorProfile: creatorProfilePda,
-        supporter: fanUser.publicKey,
-        creatorAuthority: creator.publicKey,
-        treasury: treasury.publicKey,
-        systemProgram: SystemProgram.programId,
-      })
-      .signers([fanUser])
-      .rpc();
-
-    const creatorBalAfter = await provider.connection.getBalance(creator.publicKey);
-    const treasuryBalAfter = await provider.connection.getBalance(treasury.publicKey);
-
-    // 5% protocol cut = 0.05 SOL, 95% creator cut = 0.95 SOL
-    expect(creatorBalAfter - creatorBalBefore).to.equal(0.95 * LAMPORTS_PER_SOL);
-    expect(treasuryBalAfter - treasuryBalBefore).to.equal(0.05 * LAMPORTS_PER_SOL);
-  });
-
-  it("5. Fails when unauthorized user attempts to update creator profile", async () => {
-    let failed = false;
     try {
       await program.methods
-        .updateCreatorMetadata("https://malicious.org", new anchor.BN(0), 0)
+        .registerDomain(
+          invalidName,
+          new anchor.BN(86400 * 30),
+          null,
+          null,
+          0
+        )
         .accounts({
-          creatorProfile: creatorProfilePda,
-          authority: intruder.publicKey,
+          config: configPda,
+          domainRecord: invalidPda,
+          payer: creatorAlice.publicKey,
+          owner: creatorAlice.publicKey,
+          treasury: treasury.publicKey,
+          systemProgram: SystemProgram.programId,
         })
-        .signers([intruder])
+        .signers([creatorAlice])
         .rpc();
+      expect.fail("Should have failed on invalid characters");
     } catch (err: any) {
-      failed = true;
-      expect(err.toString()).to.include("InvalidCreatorAuthority");
+      expect(err.error.errorCode.code).to.equal("InvalidCharacter");
     }
-    expect(failed).to.be.true;
+  });
+
+  it("4. Sets and resolves Reverse Record deterministically", async () => {
+    await program.methods
+      .setReverseRecord(domainName)
+      .accounts({
+        reverseRecord: reversePda,
+        domainRecord: domainPda,
+        owner: creatorAlice.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([creatorAlice])
+      .rpc();
+
+    const reverseAcc = await program.account.reverseRecord.fetch(reversePda);
+    expect(reverseAcc.owner.toBase58()).to.equal(creatorAlice.publicKey.toBase58());
+    expect(reverseAcc.domainName).to.equal(domainName);
+  });
+
+  it("5. Delegates a Subdomain to a Community Member", async () => {
+    const subPrefix = "vip";
+    const subHash = createHash("sha256").update(subPrefix).digest();
+
+    const [subPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("zns_subdomain"), domainPda.toBuffer(), subHash],
+      program.programId
+    );
+
+    await program.methods
+      .createSubdomain(subPrefix, fanCharlie.publicKey)
+      .accounts({
+        subdomainRecord: subPda,
+        parentDomain: domainPda,
+        owner: creatorAlice.publicKey,
+        authority: creatorAlice.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([creatorAlice])
+      .rpc();
+
+    const subAcc = await program.account.subdomainRecord.fetch(subPda);
+    expect(subAcc.parentDomain.toBase58()).to.equal(domainPda.toBase58());
+    expect(subAcc.owner.toBase58()).to.equal(fanCharlie.publicKey.toBase58());
+    expect(subAcc.subdomainPrefix).to.equal("vip");
+  });
+
+  it("6. Executes Fan Tipping with Exact Fee Split Routing", async () => {
+    const tipAmount = new anchor.BN(1.0 * LAMPORTS_PER_SOL);
+
+    const preAlice = await provider.connection.getBalance(creatorAlice.publicKey);
+    const preBob = await provider.connection.getBalance(collaboratorBob.publicKey);
+    const preTreasury = await provider.connection.getBalance(treasury.publicKey);
+
+    await program.methods
+      .tipCreator(tipAmount)
+      .accounts({
+        config: configPda,
+        domainRecord: domainPda,
+        tipper: fanCharlie.publicKey,
+        domainOwner: creatorAlice.publicKey,
+        collaborator: collaboratorBob.publicKey,
+        treasury: treasury.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([fanCharlie])
+      .rpc();
+
+    const postAlice = await provider.connection.getBalance(creatorAlice.publicKey);
+    const postBob = await provider.connection.getBalance(collaboratorBob.publicKey);
+    const postTreasury = await provider.connection.getBalance(treasury.publicKey);
+
+    // Tip = 1.0 SOL
+    // Fee = 2% = 0.02 SOL
+    // Post Fee = 0.98 SOL
+    // Bob Split = 20% of 0.98 SOL = 0.196 SOL
+    // Alice Primary = 0.98 - 0.196 = 0.784 SOL
+
+    const expectedTreasuryDelta = 0.02 * LAMPORTS_PER_SOL;
+    const expectedBobDelta = 0.196 * LAMPORTS_PER_SOL;
+    const expectedAliceDelta = 0.784 * LAMPORTS_PER_SOL;
+
+    expect(postTreasury - preTreasury).to.equal(expectedTreasuryDelta);
+    expect(postBob - preBob).to.equal(expectedBobDelta);
+    expect(postAlice - preAlice).to.equal(expectedAliceDelta);
   });
 });

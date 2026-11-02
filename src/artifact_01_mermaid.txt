@@ -1,0 +1,48 @@
+flowchart TD
+    subgraph Client & Off-Chain Layer
+        User[Client / Fan Wallet]
+        Creator[Creator Authority]
+        Keeper[Decay / Renewal Keeper]
+    end
+
+    subgraph ZNS Protocol State [Anchor Program: zns_creator]
+        ConfigPDA[("Global Config PDA<br/>['config']")]
+        NameRecordPDA[("Name Record PDA<br/>['zns', hash(domain_name)]")]
+        ReverseRecordPDA[("Reverse Record PDA<br/>['reverse', creator_pubkey]")]
+        CreatorProfilePDA[("Creator Profile PDA<br/>['profile', NameRecordPDA]")]
+        EscrowSplitVault[("Creator Escrow Vault<br/>['vault', NameRecordPDA]")]
+    end
+
+    subgraph External System Programs
+        SysProg["Solana System Program (1111..1111)"]
+        TokenProg["SPL Token / Token-2022 Program"]
+    end
+
+    %% Registration Flow
+    Creator -->|"1. register_domain(name, duration)"| ConfigPDA
+    ConfigPDA -->|"Fee Validation & Seed Guard"| NameRecordPDA
+    NameRecordPDA -->|"Initialize Pointers"| ReverseRecordPDA
+    SysProg ---|"Rent Exemption Funding"| NameRecordPDA
+
+    %% Profile & Split Initialization
+    Creator -->|"2. set_profile(bio, social_hash, splits)"| CreatorProfilePDA
+    CreatorProfilePDA -.->|"References"| NameRecordPDA
+
+    %% Fan Tipping / Payment Flow
+    User -->|"3. resolve_and_tip(lamports)"| NameRecordPDA
+    NameRecordPDA -->|"Reads Active Splits"| CreatorProfilePDA
+    CreatorProfilePDA -->|"CPI: Transfer Lamports"| EscrowSplitVault
+    EscrowSplitVault -->|"Direct Primary Cut"| Creator
+    EscrowSplitVault -->|"Direct Collaborator Cut"| SysProg
+
+    %% Keeper Lifecycle
+    Keeper -->|"4. sweep_expired_lease()"| NameRecordPDA
+    NameRecordPDA -->|"Reclaim Rent & Reset"| ConfigPDA
+
+    classDef pda fill:#1e1e2f,stroke:#14F195,stroke-width:2px,color:#fff;
+    classDef client fill:#2a2a40,stroke:#9945FF,stroke-width:2px,color:#fff;
+    classDef external fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#fff;
+
+    class ConfigPDA,NameRecordPDA,ReverseRecordPDA,CreatorProfilePDA,EscrowSplitVault pda;
+    class User,Creator,Keeper client;
+    class SysProg,TokenProg external;

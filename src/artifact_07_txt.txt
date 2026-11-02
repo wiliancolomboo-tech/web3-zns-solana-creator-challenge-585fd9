@@ -1,0 +1,11 @@
+zns-creator-hub/
+├── Anchor.toml
+├── Cargo.toml
+├── package.json
+├── programs/
+│   └── zns-creator-hub/
+│       ├── Cargo.toml
+│       └── src/
+│           └── lib.rs
+└── tests/
+    └── zns-creator.ts

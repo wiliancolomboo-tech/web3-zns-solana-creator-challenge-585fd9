@@ -1,0 +1,21 @@
+zns-creator-core/
+├── Cargo.toml
+├── Anchor.toml
+├── programs/
+│   └── zns-creator-core/
+│       ├── Cargo.toml
+│       └── src/
+│           ├── lib.rs
+│           ├── state.rs
+│           ├── errors.rs
+│           ├── events.rs
+│           └── instructions/
+│               ├── mod.rs
+│               ├── initialize.rs
+│               ├── register_tld.rs
+│               ├── mint_domain.rs
+│               ├── mint_subdomain.rs
+│               ├── update_resolver.rs
+│               └── tip_creator.rs
+└── tests/
+    └── zns-creator-core.ts

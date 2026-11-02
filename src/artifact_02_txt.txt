@@ -1,0 +1,10 @@
+zns-creator-protocol/
+├── Anchor.toml
+├── Cargo.toml
+├── programs/
+│   └── zns-creator-protocol/
+│       ├── Cargo.toml
+│       └── src/
+│           └── lib.rs
+└── tests/
+    └── zns-creator-protocol.ts

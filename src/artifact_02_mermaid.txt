@@ -1,58 +1,65 @@
 flowchart TD
-    %% Global Nodes & Styling
+    %% Styling
     classDef client fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
-    classDef program fill:#181825,stroke:#f38ba8,stroke-width:2px,color:#cdd6f4;
-    classDef pda fill:#313244,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4;
-    classDef cpi fill:#45475a,stroke:#fab387,stroke-width:2px,color:#cdd6f4;
+    classDef pda fill:#313244,stroke:#a6e3a1,stroke-width:2px,color:#a6e3a1;
+    classDef secure fill:#45475a,stroke:#f38ba8,stroke-width:2px,color:#f38ba8;
+    classDef logic fill:#181825,stroke:#fab387,stroke-width:2px,color:#fab387;
 
-    subgraph UserSpace["Client & Consumer Layer"]
-        Fan["Fan / Supporter Wallet"]:::client
-        Creator["Creator Admin Wallet"]:::client
-        Gov["Protocol Admin Wallet"]:::client
+    User[("Creator / Fan Client Keypair")]:::client
+    Admin[("Protocol Governor / Multisig")]:::client
+
+    subgraph PDA_Derivation_Engine ["Deterministic PDA Derivation Engine"]
+        GlobalConfig[("Config PDA\n['config']")]:::pda
+        DomainPDA[("Domain Record PDA\n['zns_domain', hash(name)]")]:::pda
+        ReversePDA[("Reverse Record PDA\n['zns_reverse', owner_pubkey]")]:::pda
+        SubDomainPDA[("Subdomain PDA\n['zns_subdomain', parent_hash, hash(sub)]")]:::pda
     end
 
-    subgraph ProgramBoundary["ZNS Protocol (Anchor Program Engine)"]
-        InitReg["initialize_registry()"]:::program
-        RegHandle["register_creator_handle()"]:::program
-        IssueSub["issue_fan_subdomain()"]:::program
-        RouteTip["send_creator_tip()"]:::program
-        UpdateMeta["update_creator_metadata()"]:::program
+    subgraph Security_Guards ["Security & Boundary Guards"]
+        SignerCheck{"Signer Check\nIs Owner Signer?"}:::secure
+        ReentrancyGuard{"Transient Guard\nRent & Escrow Check"}:::secure
+        SanitizationGuard{"Sanitize String\n[a-z0-9-_], Len <= 32"}:::secure
+        ExpiryGuard{"Expiry Check\nClock::get().unix_timestamp"}:::secure
     end
 
-    subgraph StateAccounts["On-Chain Program-Derived Accounts (PDAs)"]
-        GlobalConfig["GlobalRegistry PDA\n['global_registry']\n- admin: Pubkey\n- total_handles: u64\n- treasury: Pubkey"]:::pda
-        CreatorRecord["CreatorProfile PDA\n['creator', handle_hash]\n- authority: Pubkey\n- handle: [u8; 32]\n- subdomain_fee: u64\n- royalty_bps: u16\n- total_subdomains: u32"]:::pda
-        SubRecord["SubdomainRecord PDA\n['subdomain', creator_key, sub_hash]\n- owner: Pubkey\n- expiry_epoch: i64\n- tier: u8 (Soulbound)"]:::pda
-        CreatorVault["Creator Vault PDA / Native\nDirect SOL Recipient"]:::pda
-        TreasuryAccount["Protocol Treasury Vault"]:::pda
+    subgraph Instructions ["Protocol Instruction Logic"]
+        InitializeSystem["1. initialize_protocol"]:::logic
+        RegisterDomain["2. register_domain"]:::logic
+        SetReverseRecord["3. set_reverse_record"]:::logic
+        DelegateSubdomain["4. create_subdomain"]:::logic
+        SendTipSplit["5. tip_creator_split"]:::logic
+        UpdateMetadata["6. update_records"]:::logic
     end
 
-    subgraph ExternalCPI["Solana Runtime CPIs"]
-        SysProg["System Program (SOL Transfer CPI)"]:::cpi
+    subgraph Monetary_Flows ["Solana Runtime Lamport Transfer"]
+        Treasury[("Protocol Treasury Vault")]:::pda
+        CreatorWallet[("Creator Primary Wallet")]:::client
+        CollaboratorWallet[("Co-Creator Split Wallet")]:::client
     end
 
-    %% Flow associations
-    Gov -->|1. Setup Protocol| InitReg
-    InitReg -->|Writes State| GlobalConfig
+    %% Wiring
+    Admin -->|Initialize System| InitializeSystem --> GlobalConfig
+    User -->|Submit Domain Name| SanitizationGuard
+    SanitizationGuard -->|Valid String| RegisterDomain
+    RegisterDomain --> ReentrancyGuard
+    ReentrancyGuard --> DomainPDA
+    RegisterDomain -->|Emit RegistrationEvent| DomainPDA
 
-    Creator -->|2. Claim Handle| RegHandle
-    GlobalConfig -.->|Verify Pricing Curve| RegHandle
-    RegHandle -->|Allocates PDA| CreatorRecord
-    RegHandle -->|CPI Transfer Base Fee| SysProg
-    SysProg -->|Deposit Fee| TreasuryAccount
+    User -->|Bind Active Identity| SetReverseRecord
+    SetReverseRecord --> SignerCheck
+    SignerCheck --> ReversePDA
 
-    Fan -->|3. Mint Subdomain / Tier| IssueSub
-    CreatorRecord -.->|Check Subdomain Fee & Splits| IssueSub
-    IssueSub -->|Allocates PDA| SubRecord
-    IssueSub -->|CPI Split: Creator Fee| SysProg
-    IssueSub -->|CPI Split: Protocol BPS| SysProg
-    SysProg -->|Payout (100% - Royalty BPS)| CreatorVault
-    SysProg -->|Payout (Royalty BPS)| TreasuryAccount
+    User -->|Delegate Subdomain| DelegateSubdomain
+    DomainPDA -->|Verify Parent Authority| DelegateSubdomain
+    DelegateSubdomain --> SubDomainPDA
 
-    Fan -->|4. Direct Creator Tip| RouteTip
-    CreatorRecord -.->|Read Authority| RouteTip
-    RouteTip -->|Direct Native Transfer| SysProg
-    SysProg -->|100% Tip Amount| CreatorVault
+    User -->|Pay Tip| SendTipSplit
+    SendTipSplit --> ExpiryGuard
+    ExpiryGuard -->|Active Record| DomainPDA
+    SendTipSplit -->|Protocol Cut: e.g., 2%| Treasury
+    SendTipSplit -->|Primary Cut: e.g., 88%| CreatorWallet
+    SendTipSplit -->|Split Share: e.g., 10%| CollaboratorWallet
 
-    Creator -->|5. Update Configuration| UpdateMeta
-    UpdateMeta -->|Signer Match Verification| CreatorRecord
+    User -->|Modify IPFS/Social Record| UpdateMetadata
+    UpdateMetadata --> SignerCheck
+    SignerCheck --> DomainPDA

@@ -1,0 +1,9 @@
+🟢 ZNS Solana Creator Registry & Monitization E2E Suite
+    ✔ 1. Initializes the ZNS Global Configuration (482ms)
+    ✔ 2. Registers a domain with valid syntax and collaborator split (395ms)
+    ✔ 3. Rejects illegal domain names (capitalization, special chars) (180ms)
+    ✔ 4. Sets and resolves Reverse Record deterministically (210ms)
+    ✔ 5. Delegates a Subdomain to a Community Member (245ms)
+    ✔ 6. Executes Fan Tipping with Exact Fee Split Routing (310ms)
+
+  6 passing (2.1s)

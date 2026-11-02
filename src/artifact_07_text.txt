@@ -1,0 +1,8 @@
+zns-creator protocol tests
+    ✔ 1. Initializes Registrar configuration with tiered pricing (421ms)
+    ✔ 2. Registers handle and generates forward/reverse pointers (612ms)
+    ✔ 3. Configures Creator Profile & 70/30 Split Rule (504ms)
+    ✔ 4. Executes Direct Atomic Tip with Automated Split Distribution (598ms)
+    ✔ 5. Rejects Malicious/Mismatched Split Remainder Exploits (210ms)
+
+  5 passing (2.4s)

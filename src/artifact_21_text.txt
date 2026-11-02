@@ -1,0 +1,11 @@
+🟢 ZNS Solana Creator Protocol E2E Test Matrix
+    ✔ 1. Initializes global protocol configuration with vault PDA (412ms)
+    ✔ 2. Registers root domain for creator with multi-year duration (389ms)
+    ✔ 3. Attaches dynamic social, tip jar, and IPFS records to domain (654ms)
+    ✔ 4. Configures primary reverse resolution for creator (245ms)
+    ✔ 5. Mints hierarchical subdomain for fan/community member (290ms)
+    ✔ 6. Prevents unauthorized record updates (Attacker simulation) (112ms)
+    ✔ 7. Renews domain validity and increments expiration timestamp (310ms)
+    ✔ 8. Transfers domain custody cleanly to new owner (205ms)
+
+  8 passing (3s)

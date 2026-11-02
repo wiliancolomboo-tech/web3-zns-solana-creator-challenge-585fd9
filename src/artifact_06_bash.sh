@@ -1,4 +1,2 @@
-# Verify installations
-rustc --version
-solana --version
-anchor --version
+# Execute local validator test suite
+anchor test

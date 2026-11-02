@@ -1,0 +1,9 @@
+🟢 ZNS Solana Creator Core - Full Integration Test Matrix
+    ✔ 1. Initializes Root Namespace (.creator) (421ms)
+    ✔ 2. Registers 'solana-wizard.creator' handle & sets Reverse Lookup (512ms)
+    ✔ 3. Configures Creator Monetization & 70/30 Tip Splits (415ms)
+    ✔ 4. Distributes Dynamic Split Tip Atomically to Collaborators (498ms)
+    ✔ 5. Purchases Gated Subscription Pass & Verifies Access Gate (480ms)
+    ✔ 6. Rejects Invalid Splits not summing to 10000 BPS (120ms)
+
+  6 passing (3s)

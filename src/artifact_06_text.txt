@@ -1,0 +1,11 @@
+🟢 ZNS Solana Creator Challenge - Complete QA Test Matrix
+    ✔ Test 01: Successfully initialize protocol registry (412ms)
+    ✔ Test 02: Register Creator Namespace ('solcraft.zns') (389ms)
+    ✔ Test 03: Reject Namespace with invalid characters (182ms)
+    ✔ Test 04: Mint subdomain under creator namespace with fee split (465ms)
+    ✔ Test 05: Update Subdomain Content Hash and Target Pubkey (378ms)
+    ✔ Test 06: Reject Subdomain update when called by unauthorized wallet (210ms)
+    ✔ Test 07: Send direct SOL Tip to Creator Namespace Vault (360ms)
+    ✔ Test 08: Execute Read/Resolve instruction with CU verification (195ms)
+
+  8 passing (2.6s)

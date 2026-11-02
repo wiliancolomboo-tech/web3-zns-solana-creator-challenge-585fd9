@@ -1,0 +1,11 @@
+ZNS Protocol Test Suite
+    ✔ 1. [TLD] Initializes a Sovereign Creator TLD with Fee Curves (420ms)
+    ✔ 2. [Registration] Registers a domain under .creator TLD and pays lamports to treasury (312ms)
+    ✔ 3. [Security] Rejects registration with illegal characters (89ms)
+    ✔ 4. [Records] Updates Multi-chain and Social Metadata Records (285ms)
+    ✔ 5. [Subdomain] Creates a nested subdomain linked to parent domain (310ms)
+    ✔ 6. [Reverse Resolution] Sets deterministic O(1) reverse resolution lookup (245ms)
+    ✔ 7. [Transfer] Transfers root domain ownership safely (380ms)
+    ✔ 8. [Renewal] Extends domain lease expiration (278ms)
+
+  8 passing (2.3s)

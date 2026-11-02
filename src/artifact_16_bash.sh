@@ -1,0 +1,1 @@
+solana account $(solana-keygen pubkey) --output json

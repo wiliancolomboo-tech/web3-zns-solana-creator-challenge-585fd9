@@ -1,8 +1,11 @@
-zns-creator protocol tests
-    ✔ 1. Initializes Global Registry with valid protocol fee (412ms)
-    ✔ 2. Registers root creator handle with dynamic fee assessment (523ms)
-    ✔ 3. Issues monetized fan subdomain with automated revenue split (611ms)
-    ✔ 4. Dispatches zero-hop atomic tip to creator (489ms)
-    ✔ 5. Fails when unauthorized user attempts to update creator profile (245ms)
+🟢 ZNS Creator Hub Protocol Test Suite
+    ✔ 1. Initializes the ZNS Creator Hub protocol global config and treasury (340ms)
+    ✔ 2. Successfully registers a new creator domain handle with fee deduction (285ms)
+    ✔ 3. Rejects registration of domain names with illegal uppercase characters (142ms)
+    ✔ 4. Sets canonical reverse lookup record for creator identity (210ms)
+    ✔ 5. Configures programmatic multi-collaborator tip splits (60% Alice, 25% Bob, 15% Charlie) (195ms)
+    ✔ 6. Fails if collaborator basis points do not sum up to exactly 10,000 (125ms)
+    ✔ 7. Routes native SOL tip atomically through protocol cut and collaborator splits (410ms)
+    ✔ 8. Unauthorized caller cannot mutate domain profile content (130ms)
 
-  5 passing (2.3s)
+  8 passing (1.84s)

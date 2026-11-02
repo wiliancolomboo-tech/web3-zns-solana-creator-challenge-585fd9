@@ -1,33 +1,10 @@
-+---------------------------------------------------------------------------------------------------------+
-|                                    2-MINUTE VIDEO DEMO STORYBOARD                                       |
-+-----------+----------------------------------------------+----------------------------------------------+
-| Timestamp | Visual Display                               | Spoken Script (Audio Track)                  |
-+-----------+----------------------------------------------+----------------------------------------------+
-| 00:00-    | Dual-screen layout: Anchor Architecture      | "Welcome to the ZNS Creator Protocol deliverable|
-| 00:20     | Mermaid diagram on the left; clean CLI       | for the Solana Creator Challenge. Name       |
-|           | terminal on the right running localnet.      | services shouldn't just be static address     |
-|           |                                              | pointers; they need to be active monetization|
-|           |                                              | engines. Here is ZNS."                       |
-+-----------+----------------------------------------------+----------------------------------------------+
-| 00:20-    | Terminal: executes `anchor test`.            | "We built ZNS to give creators their own     |
-| 00:45     | All 5 test cases passing instantly.          | sub-delegated namespaces. When a creator     |
-|           | CU usage metrics highlighted in green.       | registers their canonical handle, they define|
-|           |                                              | custom subdomain pricing, metadata, and      |
-|           |                                              | automated royalty basis points on-chain."    |
-+-----------+----------------------------------------------+----------------------------------------------+
-| 00:45-    | Browser UI / Solana Explorer:                | "Watch the fan onboarding flow: A supporter  |
-| 01:15     | Fan mints 'alphafan.zenith'. Split execution | claims 'alphafan.zenith'. In a single atomic  |
-|           | shows 95% to creator, 5% to treasury.        | instruction, the fee splits: 95% straight    |
-|           |                                              | to Alice's wallet, 5% to protocol treasury.  |
-|           |                                              | No escrows. Zero custodial risk. Sub-14k CU."|
-+-----------+----------------------------------------------+----------------------------------------------+
-| 01:15-    | Anchor test output detailing direct micro-   | "We also integrate atomic tip-routing. Fans  |
-| 01:40     | tipping; Solana transaction signature logged.| can route SOL directly through the creator's |
-|           | Zero errors, overflow checks active.         | namespace handle. The protocol parses the PDA|
-|           |                                              | and settles the tip in less than 4,000 CU."  |
-+-----------+----------------------------------------------+----------------------------------------------+
-| 01:40-    | Summary slides showing optimization matrix,  | "ZNS transforms Solana identity into an      |
-| 02:00     | code security validations, and team info.    | extensible creator economy engine. Robust,   |
-|           | Call-to-action with GitHub & demo links.     | gas-optimized, and ready for mainnet rollout.|
-|           |                                              | Thank you."                                  |
-+-----------+----------------------------------------------+----------------------------------------------+
++-------------------------------------------------------------+
+| CU CONSUMPTION PROFILE (Budget: 200,000 CU)                 |
++-------------------------------------------------------------+
+| initialize            | [==] 14,210 CU                      |
+| register_domain       | [====] 21,850 CU                    |
+| set_reverse_record    | [=] 7,240 CU                        |
+| create_subdomain      | [===] 16,110 CU                     |
+| tip_creator           | [==] 11,420 CU                      |
+| update_content_hash   | [=] 5,120 CU                        |
++-------------------------------------------------------------+

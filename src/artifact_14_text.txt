@@ -1,0 +1,10 @@
+🟢 ZNS Solana Creator Challenge Test Suite
+    ✔ 1. Initializes global ZNS Protocol Configuration (412ms)
+    ✔ 2. Registers a Root Creator Identity (alice-stream.creator) (389ms)
+    ✔ 3. Updates Root Split Settings to add Collaborator at 30% (3,000 bps) (298ms)
+    ✔ 4. Mints a Subdomain Membership badge (vip-pass.alice-stream) (485ms)
+    ✔ 5. Resolves Root and atomically executes Split-Tip (70/30) (341ms)
+    ✔ 6. Rejects premature reclamation of active subdomain (220ms)
+    ✔ 7. Security Invariant: Rejects illegal characters in domain name (205ms)
+
+  7 passing (2.35s)

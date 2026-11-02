@@ -1,0 +1,2 @@
+Compiling zns-creator v0.1.0 (...)
+Finished release [optimized] target(s) in 14.82s

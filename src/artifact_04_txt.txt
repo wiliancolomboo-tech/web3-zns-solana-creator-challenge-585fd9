@@ -1,0 +1,24 @@
++---------------------------+------------------------------------+-----------------------------------------------+
+| Attack Vector / Threat    | Vulnerability Surface              | Protocol Defense Mechanism                    |
++---------------------------+------------------------------------+-----------------------------------------------+
+| PDA Collision / Frontrun  | Domain squandering / fake accounts | Deterministic canonical seed derivation       |
+|                           |                                    | [b"domain", domain_name.as_bytes()]           |
++---------------------------+------------------------------------+-----------------------------------------------+
+| Tip Interception          | Malicious actor redirects payouts  | Beneficiary Pubkey array validated against    |
+|                           |                                    | on-chain SplitConfig PDA via remainingAccounts|
++---------------------------+------------------------------------+-----------------------------------------------+
+| Reentrancy & Double Spend | Split distribution loops           | Checks-Effects-Interactions: All math & state |
+|                           |                                    | validated before native CPI transfers         |
++---------------------------+------------------------------------+-----------------------------------------------+
+| Rounding & Remainder Loss | Fractional basis point division    | Remainder attribution: Last recipient gets    |
+|                           |                                    | exact `distributable - cumulative_sum`        |
++---------------------------+------------------------------------+-----------------------------------------------+
+| Homoglyph Spoofing        | Deceptive lookalike domains        | Strict alphanumeric/hyphen sanitization filter|
+|                           | (e.g., Cyrillic 'a')               | via `validate_domain_string`                  |
++---------------------------+------------------------------------+-----------------------------------------------+
+| Unauthorized Subdomain    | Sybil subdomain minting            | Root domain authority signing guard:          |
+| Poisoning                 |                                    | `has_one = owner` constraint on root PDA      |
++---------------------------+------------------------------------+-----------------------------------------------+
+| Arithmetic Overflow       | Fee & basis point calculation      | Native Rust checked arithmetic:               |
+|                           |                                    | `checked_add`, `checked_mul`, `checked_div`   |
++---------------------------+------------------------------------+-----------------------------------------------+

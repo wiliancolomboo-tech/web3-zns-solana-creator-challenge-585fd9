@@ -1,0 +1,40 @@
+[0:00 - 0:15] INTRODUCTION & THE PROBLEM
+Visual: Screen recording displaying legacy name services vs. a rich Web3 creator terminal.
+Speaker:
+"Solana is the highest throughput consumer chain in Web3, yet our domain infrastructure is 
+stuck in 2021: static text records, no native creator revenue, and zero autonomous tiering. 
+Welcome to ZNS Creator Protocol—the decentralized naming service built from the ground up 
+for creators, streamers, and communities."
+
+[0:15 - 0:45] ARCHITECTURE & DEMO: DOMAIN & SUBDOMAIN MINTING
+Visual: Terminal splitting into Anchor test running all green, while UI shows minting 'artist.sol'.
+Speaker:
+"Under the hood, ZNS uses SHA-256 seed hashing to eliminate PDA collisions completely.
+When 'artist.sol' is minted, ZNS deploys a dedicated resolver PDA in the exact same 
+transaction—consuming under 33,000 Compute Units.
+Even better: Creators can monetize subdomains autonomously. Watch as a fan mints 
+'vip.artist.sol': the program automatically computes protocol fees and transfers 95% 
+of the lamports directly into the creator's wallet with zero manual claims needed."
+
+[0:45 - 1:15] DYNAMIC RESOLVER & ARWEAVE/IPFS VERIFICATION
+Visual: Inspecting the CreatorProfileResolver PDA on Solana Explorer.
+Speaker:
+"Unlike legacy records, ZNS resolvers store verified 32-byte content hashes and Arweave CIDs. 
+This turns any domain into a censorship-resistant decentralized link-in-bio, NFT gallery, 
+or exclusive subscriber portal. The resolver also powers our one-instruction tipping engine, 
+routing micro-tips with sub-12,000 CU execution."
+
+[1:15 - 1:45] SECURITY & TECHNICAL RIGOR
+Visual: Code walk of Anchor validation attributes and unit test report (8/8 passing).
+Speaker:
+"Security is locked down: strict treasury account constraints, owner validation, checked math 
+guarding against fee overflows, and strict domain expiration enforcement. Every single 
+instruction has been audited through our Mocha test matrix, covering edge cases from illegal 
+character injections to front-running protection."
+
+[1:45 - 2:00] THE WINNING SUBMISSION
+Visual: Summary slide: CU Benchmarks, GitHub repo URL, and final celebratory graphic.
+Speaker:
+"ZNS brings identity, monetization, and content routing into a single, composable Solana 
+standard. Production-grade, mathematically verified, and ready to scale to millions of creators. 
+Thank you!"

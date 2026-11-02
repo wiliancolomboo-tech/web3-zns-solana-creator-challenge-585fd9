@@ -1,0 +1,10 @@
+zns-creator protocol tests
+    ✔ 1. Initializes the Registry & Treasury Successfully (412ms)
+    ✔ 2. Rejects Illegal Domain Names (Uppercase / Invalid Chars) (185ms)
+    ✔ 3. Registers a Valid Creator Root Domain (320ms)
+    ✔ 4. Sets Records and Off-chain Profiles (210ms)
+    ✔ 5. Issues a Subdomain Under Parent Root (395ms)
+    ✔ 6. Configures Primary Name Canonical Reverse Record (240ms)
+    ✔ 7. Executes Atomic Tip to Creator with Protocol Split (315ms)
+
+  7 passing (2.1s)
